@@ -18,45 +18,46 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <vector>
+#include <algorithm>
 
 #include "parameters.h"
 #include "glhandler.h"
-
 
 //Class to take care of all the hassles and programming syntaxes for opengl
 class OpenGL{
     public:
         //Attribute 
-        //Identifiers for shaders and program
-        GLuint vertShaderId, fragShaderId, programId;
+        //Identifiers for program containing the shaders
+        GLuint* programId = NULL;
         
         //Identifier for the vertex buffer
         GLuint vertexBufferId;
     
         // Window for displaying
-        GLFWwindow* window;
+        //GLFWwindow* window;
 
         //Methods
     public:
         //Constructor
         OpenGL();
-        //Initialization
-        void initOpenGL();
-
-        //Error printing functions for shaders, programs and other related events
-        int printOglError(char*, int);
-        void printShaderInfoLog(GLuint);
-        void printProgramInfoLog(GLuint);
         
-        //Method to set the shaders
-        void setShaders();
+        //Initialization
+        void initializeOpenGL(GLFWwindow*);
 
-        //Dumping the window
+        // Termination
+        void terminateOpenGL();
+
+        // Methods for reading, loading the shaders and creating program out of it
+        // Code borrowed from : http://www.opengl-tutorial.org 
+        // Stores the program id as an method which can be used for attaching
+        GLuint loadShaders(const char * vertex_file_path, const char * fragment_file_path);
+
+        // The main rendering part - empty for now
+        void renderScene(GLFWwindow*);
+        
+        // Dumping the window as image frames for offline rendering
         int windowDump();
-
-        //Read and writing text files
-        char *textFileRead(char*);
-        int textFileWrite(char*, char*);
 
         ///////////////////////////////////////////////////////////////////////////
         //Attributes and methods for debugging

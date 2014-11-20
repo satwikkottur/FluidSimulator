@@ -1,10 +1,9 @@
-#define printOpenGLError() printOglError(__FILE__, __LINE__)
 #include "glutils4.h"
 
 OpenGL::OpenGL(){
 }
 
-void OpenGL::initOpenGL(){
+void OpenGL::initializeOpenGL(GLFWwindow* window){
     // Initializing using OpenGL 4 with GLFW and GLEW, instead of GLUT
 	// Initialise GLFW
 	if( !glfwInit() )
@@ -20,7 +19,7 @@ void OpenGL::initOpenGL(){
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( 1024, 768, "Fluid-Simulation", NULL, NULL);
+	window = glfwCreateWindow( winWidth, winHeight, "Fluid-Simulation", NULL, NULL);
 	if( window == NULL ){
 		fprintf( stderr, "Failed to open GLFW window.\nIf you have an Intel GPU, they are not 4.1 compatible.\n");
 		glfwTerminate();
@@ -34,88 +33,106 @@ void OpenGL::initOpenGL(){
 		fprintf(stderr, "Failed to initialize GLEW\n");
 		return;
 	}
+    
+    // Setting the background color
+    glClearColor(1.0f, 0.1f, 0.1f, 0.0f); // Light gray
 }
 
-int OpenGL::printOglError(char *file, int line){
-    //
-    // Returns 1 if an OpenGL error occurred, 0 otherwise.
-    //
-    GLenum glErr;
-    int    retCode = 0;
-
-    glErr = glGetError();
-    while (glErr != GL_NO_ERROR)
-    {
-        printf("glError in file %s @ line %d: %s\n", file, line, gluErrorString(glErr));
-        retCode = 1;
-        glErr = glGetError();
-    }
-    return retCode;
+void OpenGL::terminateOpenGL(){
+    // Terminating the OpenGL session by clearing all the variables, windows and buffers
+    glfwTerminate(); 
 }
 
-void OpenGL::printShaderInfoLog(GLuint obj){
-    int infologLength = 0;
-    int charsWritten  = 0;
-    char *infoLog;
+GLuint OpenGL::loadShaders(const char * vertex_file_path,const char * fragment_file_path){
 
-	glGetShaderiv(obj, GL_INFO_LOG_LENGTH,&infologLength);
+	// Create the shaders
+	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
-    if (infologLength > 0)
-    {
-        infoLog = (char *)malloc(infologLength);
-        glGetShaderInfoLog(obj, infologLength, &charsWritten, infoLog);
-		printf("%s\n",infoLog);
-        free(infoLog);
-    }
+	// Read the Vertex Shader code from the file
+	std::string VertexShaderCode;
+	std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
+	if(VertexShaderStream.is_open()){
+		std::string Line = "";
+		while(getline(VertexShaderStream, Line))
+			VertexShaderCode += "\n" + Line;
+		VertexShaderStream.close();
+	}else{
+		printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
+		getchar();
+		return 0;
+	}
+
+	// Read the Fragment Shader code from the file
+	std::string FragmentShaderCode;
+	std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
+	if(FragmentShaderStream.is_open()){
+		std::string Line = "";
+		while(getline(FragmentShaderStream, Line))
+			FragmentShaderCode += "\n" + Line;
+		FragmentShaderStream.close();
+	}
+
+	GLint Result = GL_FALSE;
+	int InfoLogLength;
+
+	// Compile Vertex Shader
+	printf("Compiling shader : %s\n", vertex_file_path);
+	char const * VertexSourcePointer = VertexShaderCode.c_str();
+	glShaderSource(VertexShaderID, 1, &VertexSourcePointer , NULL);
+	glCompileShader(VertexShaderID);
+
+	// Check Vertex Shader
+	glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if ( InfoLogLength > 0 ){
+		std::vector<char> VertexShaderErrorMessage(InfoLogLength+1);
+		glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+		printf("%s\n", &VertexShaderErrorMessage[0]);
+	}
+
+	// Compile Fragment Shader
+	printf("Compiling shader : %s\n", fragment_file_path);
+	char const * FragmentSourcePointer = FragmentShaderCode.c_str();
+	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer , NULL);
+	glCompileShader(FragmentShaderID);
+
+	// Check Fragment Shader
+	glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if ( InfoLogLength > 0 ){
+		std::vector<char> FragmentShaderErrorMessage(InfoLogLength+1);
+		glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
+		printf("%s\n", &FragmentShaderErrorMessage[0]);
+	}
+
+
+	// Link the program
+	printf("Linking program\n");
+	GLuint ProgramID = glCreateProgram();
+	glAttachShader(ProgramID, VertexShaderID);
+	glAttachShader(ProgramID, FragmentShaderID);
+	glLinkProgram(ProgramID);
+
+	// Check the program
+	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
+	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if ( InfoLogLength > 0 ){
+		std::vector<char> ProgramErrorMessage(InfoLogLength+1);
+		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+		printf("%s\n", &ProgramErrorMessage[0]);
+	}
+
+	glDeleteShader(VertexShaderID);
+	glDeleteShader(FragmentShaderID);
+	
+    return ProgramID;
 }
 
-void OpenGL::printProgramInfoLog(GLuint obj){
-    int infologLength = 0;
-    int charsWritten  = 0;
-    char *infoLog;
+void OpenGL::renderScene(GLFWwindow* window) {
+    // Clearing the color and depth bits
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glGetProgramiv(obj, GL_INFO_LOG_LENGTH,&infologLength);
-
-    if (infologLength > 0)
-    {
-        infoLog = (char *)malloc(infologLength);
-        glGetProgramInfoLog(obj, infologLength, &charsWritten, infoLog);
-		printf("%s\n",infoLog);
-        free(infoLog);
-    }
-}
-
-void OpenGL::setShaders() {
-	char *vs = NULL,*fs = NULL,*fs2 = NULL;
-
-	vertShaderId = glCreateShader(GL_VERTEX_SHADER);
-	fragShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-
-	vs = textFileRead("sphereVert.c");
-    fs = textFileRead("sphereFrag.c");
-
-	const char * vv = vs;
-	const char * ff = fs;
-
-	glShaderSource(vertShaderId, 1, &vv,NULL);
-	glShaderSource(fragShaderId, 1, &ff,NULL);
-
-	free(vs);free(fs);
-
-	glCompileShader(vertShaderId);
-	glCompileShader(fragShaderId);
-
-	printShaderInfoLog(vertShaderId);
-	printShaderInfoLog(fragShaderId);
-
-	programId = glCreateProgram();
-	glAttachShader(programId, vertShaderId);
-	glAttachShader(programId, fragShaderId);
-
-	glLinkProgram(programId);
-	printProgramInfoLog(programId);
-
-	glUseProgram(programId);
 }
 
 int OpenGL::windowDump(){
@@ -191,49 +208,6 @@ int OpenGL::windowDump(){
    return(true);
 }
 
-char* OpenGL::textFileRead(char *fn) {
-	FILE *fp;
-	char *content = NULL;
-
-	int count=0;
-
-	if (fn != NULL) {
-		fp = fopen(fn,"rt");
-
-		if (fp != NULL) {
-      
-      fseek(fp, 0, SEEK_END);
-      count = ftell(fp);
-      rewind(fp);
-
-			if (count > 0) {
-				content = (char *)malloc(sizeof(char) * (count+1));
-				count = fread(content,sizeof(char),count,fp);
-				content[count] = '\0';
-			}
-			fclose(fp);
-		}
-	}
-	return content;
-}
-
-int OpenGL::textFileWrite(char *fn, char *s) {
-	FILE *fp;
-	int status = 0;
-
-	if (fn != NULL) {
-		fp = fopen(fn,"w");
-
-		if (fp != NULL) {
-			
-			if (fwrite(s,sizeof(char),strlen(s),fp) == strlen(s))
-				status = 1;
-			fclose(fp);
-		}
-	}
-	return(status);
-}
-
 void OpenGL::debugOpenGL(int argc,char** argv, GLuint vertexBuffId){
     //Debugging variabes
     spacing = 0.12;
@@ -252,7 +226,7 @@ void OpenGL::debugOpenGL(int argc,char** argv, GLuint vertexBuffId){
     }
     
     //Initializing opengl
-    initOpenGL();
+    //initializeOpenGL();
 
     //Initializing a vertex array and binding it to use it
     glGenBuffers(1, &vertexBuffId);
@@ -260,11 +234,9 @@ void OpenGL::debugOpenGL(int argc,char** argv, GLuint vertexBuffId){
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*debugNo*debugNo*debugNo, vertexPos, GL_DYNAMIC_DRAW);
 
     //Setting up the shaders
-	setShaders();
+	//setShaders();
     //GLUT main loop
 	glutMainLoop();
 }
 
 //*******************************************************************************************************************//
-
-

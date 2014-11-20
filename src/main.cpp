@@ -14,6 +14,8 @@
 
 //Global to hold the vertexBuffId from OpenGL and OpenCL
 GLuint* vertexBuffId;
+GLuint programId;
+GLFWwindow* window;
 //Fluid* water;
 OpenGL* myGL;
 OpenCL* myCL;
@@ -41,48 +43,6 @@ void changeWindowSize(int w, int h) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void renderScene() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    //Rotation
-    glRotatef(0.5, 0, 1, 0);
-	glRotatef(0.1, 0, 1, 0);
-    
-    //Current Iteration
-    /*glFinish();
-    //water->fluidCL->queue->enqueueAcquireGLObjects(&memVector, NULL, NULL);
-    water->debug(vertexBuffCL);
-    //water->fluidCL->queue->enqueueAcquireGLObjects(&memVector, NULL, NULL);
-    
-    //Debug
-    //water->printParticleInfo(0);
-    printf("Iteration : %d\n", iteration);
-    iteration++;
-    if(iteration > 1000) exit(1);
-
-    //activate and specify pointer to vertex array
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * noParticles, water->particlePos, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffId);
-    glVertexPointer(3, GL_FLOAT, 0, 0);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glColor3f(0.2, 0.2, 0.9);
-    //glDrawArrays(GL_POINTS, 0, debugNo*debugNo*debugNo);
-    glDrawArrays(GL_POINTS, 0, noParticles);
-    // deactivate vertex arrays after drawing
-    glDisableClientState(GL_VERTEX_ARRAY);*/
-
-	glutSwapBuffers();
-    glutPostRedisplay();
-    //myGL->windowDump();    
-}
-
-void processNormalKeys(unsigned char key, int x, int y) {
-    switch(key){
-        case 27:
-            exit(0);
-    }
-}
-
 int main(int argc, char** argv){
     //Initializing the time measure object
     TimeMeasure myTime;
@@ -92,7 +52,30 @@ int main(int argc, char** argv){
     myCL = new OpenCL();
     //myGL = new OpenGL();
     myCL->initOpenCL();
-    //myGL->initOpenGL(argc, argv);
+  
+    //////////////////////////////////////////////////////////////////
+    // Initializing and checking OpenGL part
+    //////////////////////////////////////////////////////////////////
+
+    myGL->initializeOpenGL(window);
+
+    // Loading the shaders
+    char vertexShaderPath[] = "shaders/SimpleVertexShader.v";
+    char fragmentShaderPath[] = "shaders/SimpleFragmentShader.f";
+    programId = myGL->loadShaders(vertexShaderPath, fragmentShaderPath);
+    
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+    // L/ooping around in a while
+    do{
+        myGL->renderScene(window);
+        
+        // Running the window in infinite loop
+        //glfwSwapBuffers(window);
+        //glfwPollEvents();
+    }
+    while(glfwWindowShouldClose(window) == 0);
+    myGL->terminateOpenGL();
+
     //myCL->initOpenCLwithOpenGL();
     
     //Initializing the particles

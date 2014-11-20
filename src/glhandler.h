@@ -18,5 +18,4 @@ void renderScene();
 //Handling keyboard events
 void processNormalKeys(unsigned char, int, int);
  
-
 #endif
