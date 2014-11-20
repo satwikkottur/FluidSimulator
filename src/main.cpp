@@ -9,7 +9,7 @@
 #include "timeMeasure.h"
 #include "parameters.h"
 #include "structs/structures.h"
-//#include "fluid.h"
+#include "fluid.h"
 #include "clutils.h"
 
 //Global to hold the vertexBuffId from OpenGL and OpenCL

@@ -19,8 +19,8 @@ clutils.o: clutils.cpp
 glutils.o: glutils.cpp
 	g++ glutils.cpp -c $(OPTIONS)
 
-#fluid.o: fluid.cpp
-	#g++ fluid.cpp -c $(OPTIONS)
+fluid.o: fluid.cpp
+	g++ fluid.cpp -c $(OPTIONS)
 
 run:
 	clear
