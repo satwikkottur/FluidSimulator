@@ -1,0 +1,38 @@
+#Make file for mac
+FRAMEWORK=-lglew -lglfw3 -framework GLUT -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo -framework OpenCL
+LIB=-L /usr/local/lib
+INC=-I /usr/local/include -I /usr/include -I .
+
+OPTIONS=$(FRAMEWORK) $(INC) $(LIB)
+
+all: main
+
+main: glutils.o clutils.o main.o
+	g++ glutils.o clutils.o main.o -o main $(OPTIONS)
+
+main.o: main.cpp
+	g++ main.cpp -c $(OPTIONS)
+
+clutils.o: clutils.cpp
+	g++ clutils.cpp -c $(OPTIONS)
+
+glutils.o: glutils.cpp
+	g++ glutils.cpp -c $(OPTIONS)
+
+#fluid.o: fluid.cpp
+	#g++ fluid.cpp -c $(OPTIONS)
+
+run:
+	clear
+	make
+	./main
+
+clean:
+	rm -f *.o
+	rm -f main
+
+rebuild:
+	clear
+	make clean
+	make run
+
