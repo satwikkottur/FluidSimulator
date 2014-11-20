@@ -1,12 +1,17 @@
 #ifndef OPENGL_FUNCS
 #define OPENGL_FUNCS
 
-#include <GL/glew.h>
 #ifdef __APPLE__
+    // Include GLEW
+    #include <GL/glew.h>
+    // Include GLUT
     #include <GLUT/glut.h>
+    // Include GLFW
+    #include <GLFW/glfw3.h>
 #else
     #include <GL/glut.h>
 #endif
+
 #include <utility>
 #include <iostream>
 #include <fstream>
@@ -16,6 +21,8 @@
 
 #include "parameters.h"
 #include "glhandler.h"
+
+GLFWwindow* window;
 
 //Class to take care of all the hassles and programming syntaxes for opengl
 class OpenGL{

@@ -5,7 +5,7 @@
 #include <iostream>
 
 //#include "GL/gl_cl.h"
-#include "glutils.h"
+#include "glutils4.h"
 #include "timeMeasure.h"
 #include "parameters.h"
 #include "structs/structures.h"
