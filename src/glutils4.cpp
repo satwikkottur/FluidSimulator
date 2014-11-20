@@ -1,15 +1,16 @@
 #include "glutils4.h"
 
 OpenGL::OpenGL(){
+
 }
 
-GLFWwindow* OpenGL::initializeOpenGL(){
+void OpenGL::initializeOpenGL(){
     // Initializing using OpenGL 4 with GLFW and GLEW, instead of GLUT
 	// Initialise GLFW
 	if( !glfwInit() )
 	{
 		fprintf( stderr, "Failed to initialize GLFW\n" );
-		return NULL;
+		return;
 	}
 
 	glfwWindowHint(GLFW_SAMPLES, 4);
@@ -19,11 +20,11 @@ GLFWwindow* OpenGL::initializeOpenGL(){
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	GLFWwindow* window = glfwCreateWindow( winWidth, winHeight, "Fluid-Simulation", NULL, NULL);
+	window = glfwCreateWindow( winWidth, winHeight, "Fluid-Simulation", NULL, NULL);
 	if( window == NULL ){
 		fprintf( stderr, "Failed to open GLFW window.\nIf you have an Intel GPU, they are not 4.1 compatible.\n");
 		glfwTerminate();
-		return NULL;
+		return;
 	}
 	glfwMakeContextCurrent(window);
 
@@ -31,24 +32,41 @@ GLFWwindow* OpenGL::initializeOpenGL(){
 	glewExperimental = true; // Needed for core profile
 	if (glewInit() != GLEW_OK) {
 		fprintf(stderr, "Failed to initialize GLEW\n");
-		return NULL;
+		return;
 	}
     
     // Setting the background color
-    glClearColor(1.0f, 0.1f, 0.1f, 0.0f); // Light gray
+    glClearColor(0.9f, 0.9f, 0.9f, 0.0f); // Light gray
 
     // Setting methods for checking the inputs
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-    return window;
+    // Creating vertex objects
+	glGenVertexArrays(1, &VertexArrayID);
+	glBindVertexArray(VertexArrayID);
+
+	static const GLfloat g_vertex_buffer_data[] = { 
+		-1.0f, -1.0f, 0.0f,
+		 1.0f, -1.0f, 0.0f,
+		 0.0f,  1.0f, 0.0f,
+	};
+
+	glGenBuffers(1, &vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 }
 
 void OpenGL::terminateOpenGL(){
     // Terminating the OpenGL session by clearing all the variables, windows and buffers
+	// Cleanup VBO
+	glDeleteBuffers(1, &vertexbuffer);
+	glDeleteVertexArrays(1, &VertexArrayID);
+	glDeleteProgram(programId);
+
     glfwTerminate(); 
 }
 
-GLuint OpenGL::loadShaders(const char * vertex_file_path,const char * fragment_file_path){
+void OpenGL::loadShaders(const char * vertex_file_path,const char * fragment_file_path){
 
 	// Create the shaders
 	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
@@ -65,7 +83,7 @@ GLuint OpenGL::loadShaders(const char * vertex_file_path,const char * fragment_f
 	}else{
 		printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
 		getchar();
-		return 0;
+		return;
 	}
 
 	// Read the Fragment Shader code from the file
@@ -114,29 +132,47 @@ GLuint OpenGL::loadShaders(const char * vertex_file_path,const char * fragment_f
 
 	// Link the program
 	printf("Linking program\n");
-	GLuint ProgramID = glCreateProgram();
-	glAttachShader(ProgramID, VertexShaderID);
-	glAttachShader(ProgramID, FragmentShaderID);
-	glLinkProgram(ProgramID);
+    programId = glCreateProgram();
+	glAttachShader(programId, VertexShaderID);
+	glAttachShader(programId, FragmentShaderID);
+	glLinkProgram(programId);
 
 	// Check the program
-	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
-	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	glGetProgramiv(programId, GL_LINK_STATUS, &Result);
+	glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if ( InfoLogLength > 0 ){
 		std::vector<char> ProgramErrorMessage(InfoLogLength+1);
-		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+		glGetProgramInfoLog(programId, InfoLogLength, NULL, &ProgramErrorMessage[0]);
 		printf("%s\n", &ProgramErrorMessage[0]);
 	}
 
 	glDeleteShader(VertexShaderID);
 	glDeleteShader(FragmentShaderID);
-	
-    return ProgramID;
 }
 
-void OpenGL::renderScene(GLFWwindow* window) {
+void OpenGL::renderScene(){
     // Clearing the color and depth bits
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Use our shader
+    glUseProgram(programId);
+
+    // 1rst attribute buffer : vertices
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    glVertexAttribPointer(
+        0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+        3,                  // size
+        GL_FLOAT,           // type
+        GL_FALSE,           // normalized?
+        0,                  // stride
+        (void*)0            // array buffer offset
+    );
+
+    // Draw the triangle !
+    glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
+
+    glDisableVertexAttribArray(0);
         
     // Swap buffers
     glfwSwapBuffers(window);

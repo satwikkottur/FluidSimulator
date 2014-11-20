@@ -29,13 +29,13 @@ class OpenGL{
     public:
         //Attribute 
         //Identifiers for program containing the shaders
-        GLuint* programId = NULL;
+        GLuint programId;
         
         //Identifier for the vertex buffer
-        GLuint vertexBufferId;
+        GLuint VertexArrayID, vertexbuffer, programID;
     
         // Window for displaying
-        //GLFWwindow* window;
+        GLFWwindow* window;
 
         //Methods
     public:
@@ -43,7 +43,7 @@ class OpenGL{
         OpenGL();
         
         //Initialization
-        GLFWwindow* initializeOpenGL();
+        void initializeOpenGL();
 
         // Termination
         void terminateOpenGL();
@@ -51,10 +51,11 @@ class OpenGL{
         // Methods for reading, loading the shaders and creating program out of it
         // Code borrowed from : http://www.opengl-tutorial.org 
         // Stores the program id as an method which can be used for attaching
-        GLuint loadShaders(const char * vertex_file_path, const char * fragment_file_path);
+        void loadShaders(const char * vertex_file_path, const char * fragment_file_path);
 
         // The main rendering part - empty for now
-        void renderScene(GLFWwindow*);
+        // Takes in arguments of the current window and the program compiled by the shader
+        void renderScene();
         
         // Dumping the window as image frames for offline rendering
         int windowDump();

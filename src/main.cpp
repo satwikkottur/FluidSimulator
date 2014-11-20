@@ -16,6 +16,7 @@
 GLuint* vertexBuffId;
 GLuint programId;
 GLFWwindow* window;
+
 //Fluid* water;
 OpenGL* myGL;
 OpenCL* myCL;
@@ -52,26 +53,25 @@ int main(int argc, char** argv){
     // Initializing and checking OpenCL part //
     //////////////////////////////////////////
     myCL = new OpenCL();
-    //myGL = new OpenGL();
     myCL->initOpenCL();
   
     ////////////////////////////////////////////
     // Initializing and checking OpenGL part //
     //////////////////////////////////////////
-    window = myGL->initializeOpenGL();
+    myGL = new OpenGL();
+    myGL->initializeOpenGL();
 
     // Loading the shaders
     char vertexShaderPath[] = "shaders/SimpleVertexShader.v";
     char fragmentShaderPath[] = "shaders/SimpleFragmentShader.f";
-    programId = myGL->loadShaders(vertexShaderPath, fragmentShaderPath);
-    
+    myGL->loadShaders(vertexShaderPath, fragmentShaderPath);
     
     // Looping around in a while
     do{
-        myGL->renderScene(window);
-        
+        // Using the current shaders
+        myGL->renderScene();
     }
-    while(glfwWindowShouldClose(window) == 0);
+    while(glfwWindowShouldClose(myGL->window) == 0);
 
     myGL->terminateOpenGL();
 
