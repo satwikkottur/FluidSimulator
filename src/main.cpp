@@ -48,32 +48,31 @@ int main(int argc, char** argv){
     TimeMeasure myTime;
     myTime.addTimePoint("Start");
 
-    //Intializing the opencl and opengl parts
+    ////////////////////////////////////////////
+    // Initializing and checking OpenCL part //
+    //////////////////////////////////////////
     myCL = new OpenCL();
     //myGL = new OpenGL();
     myCL->initOpenCL();
   
-    //////////////////////////////////////////////////////////////////
-    // Initializing and checking OpenGL part
-    //////////////////////////////////////////////////////////////////
-
-    myGL->initializeOpenGL(window);
+    ////////////////////////////////////////////
+    // Initializing and checking OpenGL part //
+    //////////////////////////////////////////
+    window = myGL->initializeOpenGL();
 
     // Loading the shaders
     char vertexShaderPath[] = "shaders/SimpleVertexShader.v";
     char fragmentShaderPath[] = "shaders/SimpleFragmentShader.f";
     programId = myGL->loadShaders(vertexShaderPath, fragmentShaderPath);
     
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-    // L/ooping around in a while
+    
+    // Looping around in a while
     do{
         myGL->renderScene(window);
         
-        // Running the window in infinite loop
-        //glfwSwapBuffers(window);
-        //glfwPollEvents();
     }
     while(glfwWindowShouldClose(window) == 0);
+
     myGL->terminateOpenGL();
 
     //myCL->initOpenCLwithOpenGL();
@@ -155,3 +154,5 @@ int main(int argc, char** argv){
 
     return 0;
 }
+
+

@@ -3,13 +3,13 @@
 OpenGL::OpenGL(){
 }
 
-void OpenGL::initializeOpenGL(GLFWwindow* window){
+GLFWwindow* OpenGL::initializeOpenGL(){
     // Initializing using OpenGL 4 with GLFW and GLEW, instead of GLUT
 	// Initialise GLFW
 	if( !glfwInit() )
 	{
 		fprintf( stderr, "Failed to initialize GLFW\n" );
-		return;
+		return NULL;
 	}
 
 	glfwWindowHint(GLFW_SAMPLES, 4);
@@ -19,11 +19,11 @@ void OpenGL::initializeOpenGL(GLFWwindow* window){
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( winWidth, winHeight, "Fluid-Simulation", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow( winWidth, winHeight, "Fluid-Simulation", NULL, NULL);
 	if( window == NULL ){
 		fprintf( stderr, "Failed to open GLFW window.\nIf you have an Intel GPU, they are not 4.1 compatible.\n");
 		glfwTerminate();
-		return;
+		return NULL;
 	}
 	glfwMakeContextCurrent(window);
 
@@ -31,11 +31,16 @@ void OpenGL::initializeOpenGL(GLFWwindow* window){
 	glewExperimental = true; // Needed for core profile
 	if (glewInit() != GLEW_OK) {
 		fprintf(stderr, "Failed to initialize GLEW\n");
-		return;
+		return NULL;
 	}
     
     // Setting the background color
     glClearColor(1.0f, 0.1f, 0.1f, 0.0f); // Light gray
+
+    // Setting methods for checking the inputs
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+
+    return window;
 }
 
 void OpenGL::terminateOpenGL(){
@@ -132,7 +137,10 @@ GLuint OpenGL::loadShaders(const char * vertex_file_path,const char * fragment_f
 void OpenGL::renderScene(GLFWwindow* window) {
     // Clearing the color and depth bits
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+        
+    // Swap buffers
+    glfwSwapBuffers(window);
+    glfwPollEvents();
 }
 
 int OpenGL::windowDump(){

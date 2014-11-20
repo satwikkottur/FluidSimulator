@@ -43,7 +43,7 @@ class OpenGL{
         OpenGL();
         
         //Initialization
-        void initializeOpenGL(GLFWwindow*);
+        GLFWwindow* initializeOpenGL();
 
         // Termination
         void terminateOpenGL();
