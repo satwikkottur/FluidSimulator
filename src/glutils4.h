@@ -84,7 +84,7 @@ class OpenGL{
         float spacing;
         float* vertexPos;
 
-        void debugOpenGL(int, char**, GLuint);
+        void debugOpenGL(std::string);
 };
 
 #endif

@@ -1,7 +1,7 @@
 // minimal vertex shader
 // www.lighthouse3d.com
 
-#version 120
+#version 410
 
 void main()
 {	

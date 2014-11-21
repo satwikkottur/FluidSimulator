@@ -47,6 +47,9 @@ void OpenGL::initializeOpenGL(const char* vertexShaderPath, const char* fragment
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
+
+    // Point size enabling
+    glEnable(GL_PROGRAM_POINT_SIZE);
 	// Accept fragment if it closer to the camera than the former one
 	glDepthFunc(GL_LESS); 
 
@@ -59,51 +62,8 @@ void OpenGL::initializeOpenGL(const char* vertexShaderPath, const char* fragment
 	// Get a handle for our "MVP" uniform
 	matrixId = glGetUniformLocation(programId, "MVP");
 
-
-	// Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
-	// A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
-	static const GLfloat g_vertex_buffer_data[] = { 
-		-1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		 1.0f, 1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f,
-		 1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f,-1.0f,
-		 1.0f,-1.0f,-1.0f,
-		 1.0f, 1.0f,-1.0f,
-		 1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		 1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,
-		 1.0f,-1.0f, 1.0f,
-		 1.0f, 1.0f, 1.0f,
-		 1.0f,-1.0f,-1.0f,
-		 1.0f, 1.0f,-1.0f,
-		 1.0f,-1.0f,-1.0f,
-		 1.0f, 1.0f, 1.0f,
-		 1.0f,-1.0f, 1.0f,
-		 1.0f, 1.0f, 1.0f,
-		 1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f,
-		 1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		 1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		 1.0f,-1.0f, 1.0f
-	};
-
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    std::string debugConfig = "PARTICLE_CUBE";
+    debugOpenGL(debugConfig);
 }
 
 void OpenGL::terminateOpenGL(){
@@ -222,9 +182,6 @@ void OpenGL::renderScene(){
 	// Our ModelViewProjection : multiplication of our 3 matrices
 	MVP = Projection * View * userMat * Model; // Remember, matrix multiplication is the other way around
     
-    // Debugging the scale attribute
-    printf("Scale : %f\n", scale);
-
     // Clearing the color and depth bits
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -248,7 +205,10 @@ void OpenGL::renderScene(){
     );
 
     // Draw the triangle !
-    glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
+    // Drawing points
+    glPointSize(20.0);
+    glDrawArrays(GL_POINTS, 0, 125); // 12*3 indices starting at 0 -> 12 triangles
+    //glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
 
     glDisableVertexAttribArray(0);
         
@@ -361,35 +321,78 @@ int OpenGL::windowDump(){
    return(true);
 }
 
-void OpenGL::debugOpenGL(int argc,char** argv, GLuint vertexBuffId){
-    //Debugging variabes
-    spacing = 0.12;
-    vertexPos = new float[3 * debugNo * debugNo * debugNo];
+void OpenGL::debugOpenGL(std::string debugConfig){
+    if(debugConfig.compare("SURFACE_CUBE") == 0){
+        printf("Entered here\n");
+        // Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
+        // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
+        static const GLfloat vertexPos[] = { 
+            -1.0f,-1.0f,-1.0f,
+            -1.0f,-1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f,
+             1.0f, 1.0f,-1.0f,
+            -1.0f,-1.0f,-1.0f,
+            -1.0f, 1.0f,-1.0f,
+             1.0f,-1.0f, 1.0f,
+            -1.0f,-1.0f,-1.0f,
+             1.0f,-1.0f,-1.0f,
+             1.0f, 1.0f,-1.0f,
+             1.0f,-1.0f,-1.0f,
+            -1.0f,-1.0f,-1.0f,
+            -1.0f,-1.0f,-1.0f,
+            -1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f,-1.0f,
+             1.0f,-1.0f, 1.0f,
+            -1.0f,-1.0f, 1.0f,
+            -1.0f,-1.0f,-1.0f,
+            -1.0f, 1.0f, 1.0f,
+            -1.0f,-1.0f, 1.0f,
+             1.0f,-1.0f, 1.0f,
+             1.0f, 1.0f, 1.0f,
+             1.0f,-1.0f,-1.0f,
+             1.0f, 1.0f,-1.0f,
+             1.0f,-1.0f,-1.0f,
+             1.0f, 1.0f, 1.0f,
+             1.0f,-1.0f, 1.0f,
+             1.0f, 1.0f, 1.0f,
+             1.0f, 1.0f,-1.0f,
+            -1.0f, 1.0f,-1.0f,
+             1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f,-1.0f,
+            -1.0f, 1.0f, 1.0f,
+             1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f,
+             1.0f,-1.0f, 1.0f
+        };
 
-    int count = 0;
-    for(int i = 0; i < debugNo; i++){
-        for(int j = 0; j < debugNo; j++){
-            for(int k = 0; k < debugNo; k++){
-                vertexPos[3 * count] = (float)i * spacing;
-                vertexPos[3 * count + 1] = (float)j * spacing;
-                vertexPos[3 * count + 2] = (float)k * spacing;
-                count++;
+        //Initializing a vertex array and binding it to use it
+        glGenBuffers(1, &vertexbuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPos), vertexPos, GL_STATIC_DRAW);
+        return;
+    }
+
+    if(debugConfig.compare("PARTICLE_CUBE") == 0){
+        //Debugging variabes
+        spacing = 0.25;
+        GLfloat vertexPos[3 * 5 * 5 * 5];
+
+        int count = 0;
+        for(int i = 0; i < 5; i++){
+            for(int j = 0; j < 5; j++){
+                for(int k = 0; k < 5; k++){
+                    vertexPos[3 * count] = (float)i * spacing;
+                    vertexPos[3 * count + 1] = (float)j * spacing;
+                    vertexPos[3 * count + 2] = (float)k * spacing;
+                    count++;
+                }
             }
         }
+        //Initializing a vertex array and binding it to use it
+        glGenBuffers(1, &vertexbuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPos), vertexPos, GL_STATIC_DRAW);
     }
-    
-    //Initializing opengl
-    //initializeOpenGL();
-
-    //Initializing a vertex array and binding it to use it
-    glGenBuffers(1, &vertexBuffId);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*debugNo*debugNo*debugNo, vertexPos, GL_DYNAMIC_DRAW);
-
-    //Setting up the shaders
-	//setShaders();
-    //GLUT main loop
-	//glutMainLoop();
 }
 
 //*******************************************************************************************************************//
