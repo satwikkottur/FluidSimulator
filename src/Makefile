@@ -1,7 +1,7 @@
 #Make file for mac
 FRAMEWORK=-lglew -lglfw3 -framework GLUT -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo -framework OpenCL
 LIB=-L /usr/local/lib
-INC=-I /usr/local/include -I /usr/include 
+INC=-I /usr/local/include -I /usr/include -I ../
 
 OPTIONS=$(FRAMEWORK) $(INC) $(LIB)
 
