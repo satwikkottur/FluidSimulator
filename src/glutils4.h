@@ -26,7 +26,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "parameters.h"
-#include "glhandler.h"
 
 //Class to take care of all the hassles and programming syntaxes for opengl
 class OpenGL{
@@ -46,6 +45,13 @@ class OpenGL{
         // MVP matrix for controlling the view of the scene
         // Later keyboard binding added for different views
         glm::mat4 MVP;
+
+        float scale; // Scale that changes by moving
+        float scaleChange;
+        
+        float angle; // Angle that changes with change in viewpoint
+        float angleChange; // Angle change 
+
         //Methods
     public:
         //Constructor
@@ -61,6 +67,9 @@ class OpenGL{
         // Code borrowed from : http://www.opengl-tutorial.org 
         // Stores the program id as an method which can be used for attaching
         void loadShaders(const char * vertex_file_path, const char * fragment_file_path);
+
+        // Getting the transformation matrix using user interaction
+        void registerUserInputs();
 
         // The main rendering part - empty for now
         // Takes in arguments of the current window and the program compiled by the shader
