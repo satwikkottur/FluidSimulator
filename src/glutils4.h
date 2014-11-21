@@ -21,6 +21,10 @@
 #include <vector>
 #include <algorithm>
 
+// Geometry library for OpenGL
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "parameters.h"
 #include "glhandler.h"
 
@@ -28,22 +32,27 @@
 class OpenGL{
     public:
         //Attribute 
-        //Identifiers for program containing the shaders
-        GLuint programId;
         
-        //Identifier for the vertex buffer
-        GLuint VertexArrayID, vertexbuffer, programID;
+        //Identifier for the various elements
+        GLuint vertexArrayId,  // VBO object identifier
+                vertexbuffer,  // Buffer for position of the vertices
+                programId,     // Identifier for program with shaders
+                matrixId;      // MVP matrix handler
+
     
         // Window for displaying
         GLFWwindow* window;
 
+        // MVP matrix for controlling the view of the scene
+        // Later keyboard binding added for different views
+        glm::mat4 MVP;
         //Methods
     public:
         //Constructor
         OpenGL();
         
         //Initialization
-        void initializeOpenGL();
+        void initializeOpenGL(const char*, const char*);
 
         // Termination
         void terminateOpenGL();

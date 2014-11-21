@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <iostream>
 
+// Adding the geometry handling library for OpenGL
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 //#include "GL/gl_cl.h"
 #include "glutils4.h"
 #include "timeMeasure.h"
@@ -14,8 +18,6 @@
 
 //Global to hold the vertexBuffId from OpenGL and OpenCL
 GLuint* vertexBuffId;
-GLuint programId;
-GLFWwindow* window;
 
 //Fluid* water;
 OpenGL* myGL;
@@ -23,26 +25,6 @@ OpenCL* myCL;
 std::vector<cl::Memory> memVector;
 cl::BufferGL* vertexBuffCL;
 int iteration = 0;
-
-void changeWindowSize(int w, int h) {
-	// Prevent a divide by zero, when window is too short
-	// (you cant make a window of zero width).
-	if(h == 0)
-		h = 1;
-
-	float ratio = 1.0* w / h;
-
-	// Reset the coordinate system before modifying
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	
-	// Set the viewport to be the entire window
-    glViewport(0, 0, w, h);
-
-	// Set the correct perspective.
-	gluPerspective(45,ratio,1,1000);
-	glMatrixMode(GL_MODELVIEW);
-}
 
 int main(int argc, char** argv){
     //Initializing the time measure object
@@ -59,19 +41,19 @@ int main(int argc, char** argv){
     // Initializing and checking OpenGL part //
     //////////////////////////////////////////
     myGL = new OpenGL();
-    myGL->initializeOpenGL();
-
-    // Loading the shaders
-    char vertexShaderPath[] = "shaders/SimpleVertexShader.v";
-    char fragmentShaderPath[] = "shaders/SimpleFragmentShader.f";
-    myGL->loadShaders(vertexShaderPath, fragmentShaderPath);
+    
+    // Loading the shader paths
+    char vertexShaderPath[] = "shaders/TransformVertexShader.v";
+    char fragmentShaderPath[] = "shaders/ColorFragmentShader.f";
+    myGL->initializeOpenGL(vertexShaderPath, fragmentShaderPath);
     
     // Looping around in a while
     do{
         // Using the current shaders
         myGL->renderScene();
     }
-    while(glfwWindowShouldClose(myGL->window) == 0);
+    while(glfwWindowShouldClose(myGL->window) == 0 &&
+        glfwGetKey(myGL->window, GLFW_KEY_ESCAPE) != GLFW_PRESS);
 
     myGL->terminateOpenGL();
 

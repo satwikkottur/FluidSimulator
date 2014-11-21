@@ -43,8 +43,8 @@
 #define spikyDeriv(x) -14.3238 * pow(1-x, 2)
 
 //OpenGL parameters
-#define winHeight 500
-#define winWidth 500
+#define winHeight 768
+#define winWidth 1024
 #define heightOffSet 100
 #define widthOffSet 100
 

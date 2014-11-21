@@ -11,16 +11,16 @@ main: glutils4.o clutils.o fluid.o main.o
 	g++ glutils4.o clutils.o fluid.o main.o -o main $(OPTIONS)
 
 main.o: main.cpp
-	g++ main.cpp -c $(OPTIONS)
+	g++ main.cpp -c $(INC)
 
 clutils.o: clutils.cpp
-	g++ clutils.cpp -c $(OPTIONS)
+	g++ clutils.cpp -c $(INC)
 
 glutils4.o: glutils4.cpp
-	g++ glutils4.cpp -c $(OPTIONS)
+	g++ glutils4.cpp -c $(INC)
 
 fluid.o: fluid.cpp
-	g++ fluid.cpp -c $(OPTIONS)
+	g++ fluid.cpp -c $(INC)
 
 run:
 	clear
