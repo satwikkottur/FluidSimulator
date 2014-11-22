@@ -1,0 +1,75 @@
+#include "structs/structures.h"
+#include "parameters.h"
+
+//#define poly6(x) 1.5667 * pow(1-x*x, 3)
+
+__kernel void lambda_estimation(__global struct Particle* P, __global int* voxelInd){
+    //Get the index of the current element to be processed
+    int i = get_global_id(0);
+
+ 
+    //Finding the neighbours on the basis on position of particle
+    //int xInd = P[i].voxelId % noVoxelX;
+    //int yInd = ((P[i].voxelId - xInd)/noVoxelX) % noVoxelY;
+    //int zInd = (P[i].voxelId - xInd - yInd * noVoxelX) / (noVoxelX * noVoxelY);
+
+    //Generating neighbour voxels
+    int nbrs[8];
+
+    float voxelPartX = ((float)P[i].pos.x / voxelSize); 
+    float voxelPartY = ((float)P[i].pos.y / voxelSize); 
+    float voxelPartZ = ((float)P[i].pos.z / voxelSize); 
+    voxelPartX = voxelPartX - (int)voxelPartX;
+    voxelPartY = voxelPartY - (int)voxelPartY;
+    voxelPartZ = voxelPartZ - (int)voxelPartZ;
+
+    int offsetX = (voxelPartX > 0.5)? 1 : -1;
+    int offsetY = (voxelPartY > 0.5)? noVoxelX : -1 * noVoxelX;
+    int offsetZ = (voxelPartZ > 0.5)? noVoxelX * noVoxelY : -1 * noVoxelX * noVoxelY;
+
+
+    for(int j = 0; j < 8; j++){
+        nbrs[j] = P[i].voxelId + (j&1)*offsetX + ((j>>1)&1)*offsetY + ((j>>2)&1)*offsetZ;
+    }
+    
+    float density = 9.0;
+    float distSquared;
+    float diffX, diffY, diffZ;
+    float denominator = 0;
+    float denomPart = 0;
+    float nbrContr = 0;
+    float dist;
+    //Evaluating the kernel for each voxel
+    for(int j = 0; j < 8; j++){
+        if(nbrs[j] < 0 || nbrs[j] > noVoxels) continue;
+        int nbrStartIndex = voxelInd[nbrs[j]];
+        if(nbrStartIndex == -1) continue;
+        for(int k = nbrStartIndex ;; k++){
+            if(k > N-1) break;
+            if(P[k].voxelId != nbrs[j]) break;
+            diffX = (P[i].pos.x - P[k].pos.x);
+            diffY = (P[i].pos.y - P[k].pos.y);
+            diffX = (P[i].pos.z - P[k].pos.z);
+            distSquared = diffX * diffX + diffY * diffY + diffZ * diffZ;
+            //dist = sqrt(distSquared);
+            //Current neighbour is under the support of the kernel function
+            //if(distSquared <= 1){
+                //Density estimation
+                //density += 1.5667 * (1 - distSquared) * (1 - distSquared) * (1 - distSquared);
+                //Contribution of the neighbour
+                //nbrContr = 14.3238 * (1 - dist) * (1 - dist); 
+
+                //denominator += nbrContr * nbrContr;
+                //denomPart += -1 * nbrContr;
+            //}
+        }
+    }
+    P[i].density = 12.0;
+    P[i].lambda = 1.0;
+    return;
+    //P[i].lambda = -1 * (density/fluidDensity -1) / (denominator + denomPart * denomPart); 
+    P[i].lambda = 12.0;
+    P[i].density = 13.0;
+    //P[i].density = density;
+}
+

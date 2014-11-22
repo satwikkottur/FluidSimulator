@@ -38,52 +38,41 @@ int main(int argc, char** argv){
     myCL->initOpenCL();
   
     ////////////////////////////////////////////
-    // Initializing and checking OpenGL part //
+    // Initializing the particles in air //
     //////////////////////////////////////////
+    Fluid* water;
+    water = new Fluid();
+    water->fluidCL = myCL;
+    water->initParticles("BLOCK_IN_AIR");
+    water->setupKernels();
+    water->setupSystem();
+
+    //water->runIteration();
+      ///////////////////////////////////////////
+     // Initializing and checking OpenGL part //
+    ///////////////////////////////////////////
     myGL = new OpenGL();
     
     // Loading the shader paths
-    char vertexShaderPath[] = "shaders/TransformVertexShader.v";
-    char fragmentShaderPath[] = "shaders/ColorFragmentShader.f";
+    char vertexShaderPath[] = "shaders/SphereVertexShader.v";
+    char fragmentShaderPath[] = "shaders/SphereFragmentShader.f";
     myGL->initializeOpenGL(vertexShaderPath, fragmentShaderPath);
     
     // Looping around in a while
     do{
-        // Using the current shaders
+        // Rendering the scene
         myGL->renderScene();
     }
     while(glfwWindowShouldClose(myGL->window) == 0 &&
         glfwGetKey(myGL->window, GLFW_KEY_ESCAPE) != GLFW_PRESS);
 
+    // Cleaning up objects, VBOs, vertex arrays
     myGL->terminateOpenGL();
 
     //myCL->initOpenCLwithOpenGL();
     
     //Initializing the particles
-    //Fluid water;
-    /*water = new Fluid();
-    water->fluidCL = myCL;
-    water->initParticles("BLOCK_IN_AIR");
-    water->setupKernels();
-    water->setupSystem();*/
-
     //water.runIteration();
-
-    //Debugging variabes
-    /*float spacing = 0.12;
-    float* vertexPos = new float[3 * debugNo * debugNo * debugNo];
-
-    int count = 0;
-    for(int i = 0; i < debugNo; i++){
-        for(int j = 0; j < debugNo; j++){
-            for(int k = 0; k < debugNo; k++){
-                vertexPos[3 * count] = (float)i * spacing;
-                vertexPos[3 * count + 1] = (float)j * spacing;
-                vertexPos[3 * count + 2] = (float)k * spacing;
-                count++;
-            }
-        }
-    }*/
 
     /*for(int i = 0; i < 1; i++){
         water->debug(vertexBuffCL);
@@ -91,9 +80,6 @@ int main(int argc, char** argv){
         //myTime.addTimePoint("Iteration done");
     }*/
     
-    //Initializing opengl
-    //myGL.initOpenGL(argc, argv);
-
     //Initializing a vertex array and binding it to use it
     //glGenBuffers(1, &vertexBuffId);
     //glBindBuffer(GL_ARRAY_BUFFER, vertexBuffId);
@@ -109,12 +95,6 @@ int main(int argc, char** argv){
     water->fluidCL->queue->enqueueAcquireGLObjects(&memVector, NULL, NULL);
     water->debug(vertexBuffCL);
     water->fluidCL->queue->enqueueAcquireGLObjects(&memVector, NULL, NULL);*/
-
-    //Setting up the shaders
-	//myGL->setShaders();
-    //GLUT main loop
-	//glutMainLoop();
-    //return 0;
 
     /*water.fluidCL = &myCL;
     water.initParticles("BLOCK_IN_AIR");
@@ -136,5 +116,3 @@ int main(int argc, char** argv){
 
     return 0;
 }
-
-

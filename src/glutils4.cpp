@@ -60,7 +60,12 @@ void OpenGL::initializeOpenGL(const char* vertexShaderPath, const char* fragment
     loadShaders(vertexShaderPath, fragmentShaderPath);
     
 	// Get a handle for our "MVP" uniform
-	matrixId = glGetUniformLocation(programId, "MVP");
+	mvpMatrixId = glGetUniformLocation(programId, "MVP");
+
+    // Get a handler for Projection matrix, modelview matrix
+    projMatrixId = glGetUniformLocation(programId, "projection");
+    modelMatrixId = glGetUniformLocation(programId, "modelView");
+    frameSizeId = glGetUniformLocation(programId, "frameSize");
 
     std::string debugConfig = "PARTICLE_CUBE";
     debugOpenGL(debugConfig);
@@ -161,11 +166,14 @@ void OpenGL::loadShaders(const char * vertex_file_path,const char * fragment_fil
 }
 
 void OpenGL::renderScene(){
-    // Changing the MVP matrix based on the keyboard input
-    // Moving the camera around
+    
+    // Storing the frame size
+    frameSize = glm::vec2(winWidth, winHeight);
+
 	// Projection matrix :
     // 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	glm::mat4 Projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+	projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+    
 	// Camera matrix
 	glm::mat4 View = glm::lookAt(
                     glm::vec3(4,3,-3), // Camera is at (4,3,-3), in World Space
@@ -173,14 +181,18 @@ void OpenGL::renderScene(){
                     glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
                    );
     
+    // Reading keyboard and updating the state of camera accordingly 
     registerUserInputs();
+
     // Getting a user transformation matrix from user-interface
     glm::mat4 userMat = glm::scale(glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0, 1.0, 0.0)), glm::vec3(scale, scale, scale));
 
 	// Model matrix : an identity matrix (model will be at the origin)
 	glm::mat4 Model = glm::mat4(1.0f);
+
 	// Our ModelViewProjection : multiplication of our 3 matrices
-	MVP = Projection * View * userMat * Model; // Remember, matrix multiplication is the other way around
+	MVP = projection * View * userMat * Model; // Remember, matrix multiplication is the other way around
+    modelView = View * userMat * Model;
     
     // Clearing the color and depth bits
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -190,7 +202,12 @@ void OpenGL::renderScene(){
 
     // Send our transformation to the currently bound shader, 
     // in the "MVP" uniform
-    glUniformMatrix4fv(matrixId, 1, GL_FALSE, &MVP[0][0]);
+    glUniformMatrix4fv(mvpMatrixId, 1, GL_FALSE, &MVP[0][0]);
+
+    // Sending projective matrix and modelView matrix seperately along with screensize
+    glUniformMatrix4fv(projMatrixId, 1, GL_FALSE, &projection[0][0]);
+    glUniformMatrix4fv(modelMatrixId, 1, GL_FALSE, &modelView[0][0]);
+    glUniform2f(frameSizeId, frameSize[0], frameSize[1]);
 
     // 1rst attribute buffer : vertices
     glEnableVertexAttribArray(0);
@@ -207,7 +224,7 @@ void OpenGL::renderScene(){
     // Draw the triangle !
     // Drawing points
     glPointSize(20.0);
-    glDrawArrays(GL_POINTS, 0, 125); // 12*3 indices starting at 0 -> 12 triangles
+    glDrawArrays(GL_POINTS, 0, noDebugPts * noDebugPts * noDebugPts); // 12*3 indices starting at 0 -> 12 triangles
     //glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
 
     glDisableVertexAttribArray(0);
@@ -323,7 +340,6 @@ int OpenGL::windowDump(){
 
 void OpenGL::debugOpenGL(std::string debugConfig){
     if(debugConfig.compare("SURFACE_CUBE") == 0){
-        printf("Entered here\n");
         // Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
         // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
         static const GLfloat vertexPos[] = { 
@@ -374,13 +390,13 @@ void OpenGL::debugOpenGL(std::string debugConfig){
 
     if(debugConfig.compare("PARTICLE_CUBE") == 0){
         //Debugging variabes
-        spacing = 0.25;
-        GLfloat vertexPos[3 * 5 * 5 * 5];
+        spacing = 0.10;
+        GLfloat vertexPos[3 * noDebugPts * noDebugPts * noDebugPts];
 
         int count = 0;
-        for(int i = 0; i < 5; i++){
-            for(int j = 0; j < 5; j++){
-                for(int k = 0; k < 5; k++){
+        for(int i = 0; i < noDebugPts; i++){
+            for(int j = 0; j < noDebugPts; j++){
+                for(int k = 0; k < noDebugPts; k++){
                     vertexPos[3 * count] = (float)i * spacing;
                     vertexPos[3 * count + 1] = (float)j * spacing;
                     vertexPos[3 * count + 2] = (float)k * spacing;

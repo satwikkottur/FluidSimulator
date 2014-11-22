@@ -36,15 +36,25 @@ class OpenGL{
         GLuint vertexArrayId,  // VBO object identifier
                 vertexbuffer,  // Buffer for position of the vertices
                 programId,     // Identifier for program with shaders
-                matrixId;      // MVP matrix handler
+                mvpMatrixId,      // MVP matrix handler
+                projMatrixId,  // Project matrix handler
+                modelMatrixId ; // ModelView Matrix handler
 
+        // Holding the screen size
+        GLuint frameSizeId;
     
         // Window for displaying
         GLFWwindow* window;
 
         // MVP matrix for controlling the view of the scene
         // Later keyboard binding added for different views
-        glm::mat4 MVP;
+        glm::mat4 MVP, View;
+
+        // Sending projective matrix, modelview matrix seperately for vertex shader
+        glm::mat4 projection, modelView;
+        glm::vec2 frameSize;
+
+        // Window size and point sprite size
 
         float scale; // Scale that changes by moving
         float scaleChange;

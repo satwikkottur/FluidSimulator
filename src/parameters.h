@@ -48,10 +48,12 @@
 #define heightOffSet 100
 #define widthOffSet 100
 
+#define pointSpriteSize 1.0
+
 #define lightPosX 0.69
 #define lightPosY -0.69
 #define lightPosZ -0.69
 
 //Debugging OpenGL
-#define debugNo 10
+#define noDebugPts 10
 #endif
