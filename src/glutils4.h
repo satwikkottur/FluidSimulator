@@ -22,6 +22,7 @@
 #include <algorithm>
 
 // Geometry library for OpenGL
+#define GLM_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -40,8 +41,9 @@ class OpenGL{
                 projMatrixId,  // Project matrix handler
                 modelMatrixId ; // ModelView Matrix handler
 
-        // Holding the screen size
-        GLuint frameSizeId;
+        // Holding the screen size, light position
+        GLuint frameSizeId,
+                lightPosId; 
     
         // Window for displaying
         GLFWwindow* window;
@@ -52,15 +54,20 @@ class OpenGL{
 
         // Sending projective matrix, modelview matrix seperately for vertex shader
         glm::mat4 projection, modelView;
-        glm::vec2 frameSize;
-
         // Window size and point sprite size
+        glm::vec2 frameSize;
+        glm::vec3 lightPos;
 
+        // State variables that can be controlled through keyboard
         float scale; // Scale that changes by moving
         float scaleChange;
         
         float angle; // Angle that changes with change in viewpoint
         float angleChange; // Angle change 
+
+        // Angles of the light
+        float lightAngleX;
+        float lightAngleY;
 
         //Methods
     public:

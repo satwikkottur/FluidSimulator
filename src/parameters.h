@@ -50,9 +50,9 @@
 
 #define pointSpriteSize 1.0
 
-#define lightPosX 0.69
-#define lightPosY -0.69
-#define lightPosZ -0.69
+#define lightPosX -0.14f
+#define lightPosY 0.04f
+#define lightPosZ 0.99f
 
 //Debugging OpenGL
 #define noDebugPts 10

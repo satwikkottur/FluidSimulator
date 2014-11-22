@@ -1,11 +1,15 @@
 #include "glutils4.h"
 
 OpenGL::OpenGL(){
-    scale = 1.0; // Scale that changes by moving
+    scale = 2.0; // Scale that changes by moving
     scaleChange = 0.005;
     
     angle = 0; // Angle that changes with change in viewpoint
     angleChange = 0.01; // Angle change 
+
+    // Light angle defaults
+    lightAngleX = 0.0;
+    lightAngleY = 0.0;
 }
 
 void OpenGL::initializeOpenGL(const char* vertexShaderPath, const char* fragmentShaderPath){
@@ -66,6 +70,9 @@ void OpenGL::initializeOpenGL(const char* vertexShaderPath, const char* fragment
     projMatrixId = glGetUniformLocation(programId, "projection");
     modelMatrixId = glGetUniformLocation(programId, "modelView");
     frameSizeId = glGetUniformLocation(programId, "frameSize");
+
+    // Handler for light direction
+    lightPosId = glGetUniformLocation(programId, "lightPos");
 
     std::string debugConfig = "PARTICLE_CUBE";
     debugOpenGL(debugConfig);
@@ -174,25 +181,37 @@ void OpenGL::renderScene(){
     // 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
     
-	// Camera matrix
-	glm::mat4 View = glm::lookAt(
-                    glm::vec3(4,3,-3), // Camera is at (4,3,-3), in World Space
-                    glm::vec3(0,0,0), // and looks at the origin
-                    glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
-                   );
-    
     // Reading keyboard and updating the state of camera accordingly 
     registerUserInputs();
 
     // Getting a user transformation matrix from user-interface
-    glm::mat4 userMat = glm::scale(glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0, 1.0, 0.0)), glm::vec3(scale, scale, scale));
+    glm::mat4 cameraScaling = glm::scale(glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0, 1.0, 0.0)), glm::vec3(scale, scale, scale));
+
+    glm::vec4 homoCamPos = cameraScaling * glm::vec4(1.0f);
+
+	// Camera matrix
+	glm::mat4 View = glm::lookAt(
+                    homoCamPos.xyz()/ homoCamPos.w, // Camera is at (4,3,-3), in World Space
+                    glm::vec3(0,0,0), // and looks at the origin
+                    glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
+                   );
+    
+    // Adjusting the position of the light
+    glm::mat4 lightRotate = glm::rotate(glm::mat4(1.0f), lightAngleY, glm::vec3(0.0, 1.0, 0.0)); 
+    lightRotate = glm::rotate(lightRotate, lightAngleX, glm::vec3(1.0, 0.0, 0.0)); 
+    glm::vec4 homoLightPos = lightRotate * 
+                        glm::vec4(lightPosX, lightPosY, lightPosZ, 1.0f);
+    lightPos = glm::normalize(glm::vec3(homoLightPos[0], homoLightPos[1], homoLightPos[2]));
+
+    //Debugging the angles for the best possible position for the light
+    //printf("Light Angles : %f %f %f\n", lightPos[0], lightPos[1], lightPos[2]);
 
 	// Model matrix : an identity matrix (model will be at the origin)
 	glm::mat4 Model = glm::mat4(1.0f);
 
 	// Our ModelViewProjection : multiplication of our 3 matrices
-	MVP = projection * View * userMat * Model; // Remember, matrix multiplication is the other way around
-    modelView = View * userMat * Model;
+    modelView = View  * Model;
+	MVP = projection * modelView; // Remember, matrix multiplication is the other way around
     
     // Clearing the color and depth bits
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -208,6 +227,7 @@ void OpenGL::renderScene(){
     glUniformMatrix4fv(projMatrixId, 1, GL_FALSE, &projection[0][0]);
     glUniformMatrix4fv(modelMatrixId, 1, GL_FALSE, &modelView[0][0]);
     glUniform2f(frameSizeId, frameSize[0], frameSize[1]);
+    glUniform3f(lightPosId, lightPos[0], lightPos[1], lightPos[2]);
 
     // 1rst attribute buffer : vertices
     glEnableVertexAttribArray(0);
@@ -263,6 +283,29 @@ void  OpenGL::registerUserInputs(){
         angle -= angleChange;
         return;
     }
+
+    // Changing the light direction using W,S,A,D
+
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+        lightAngleX += angleChange;
+        return;
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
+        lightAngleX -= angleChange;
+        return;
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+        lightAngleY -= angleChange;
+        return;
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+        lightAngleY += angleChange;
+        return;
+    }
+
 }
 
 int OpenGL::windowDump(){
