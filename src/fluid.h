@@ -121,10 +121,22 @@ class Fluid{
         // Running kernel methods
         void runPositionCopyKernel();
         void runExternalForceKernel();
+        void runHashKernel();
+        void runNeighborKernel();
+        void runDensityEstimationKernel();
+        void runLambdaEstimationKernel();
+        void runDisplacementKernel();
+        void runCollisionKernel();
+        void runVelocityKernel();
 
         // Testing kernel methods
         void testPositionCopyKernel();
         void testExternalForceKernel();
+        void testRadixSort();
+        void testHashKernel();
+        void testDensityEstimationKernel();
+        void testNeighborKernel();
+        void testLambdaEstimationKernel();
 
     private:
         //Attributes

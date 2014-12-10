@@ -220,7 +220,7 @@ void Fluid::debug(BufferGL* vertexBuffOpenGL){
     NDRange hash(noHashThreads);
 
     // Copying the position of the particles from float[3*N] to OpenCL buffer
-    runPositionCopyKernel();
+    //runPositionCopyKernel();
     //testPositionCopyKernel();
 
     // External force calculations and updating velocity and position guess
@@ -228,117 +228,50 @@ void Fluid::debug(BufferGL* vertexBuffOpenGL){
     //testExternalForceKernel();
 
     //Sorting the particles according to the voxel id, for easier match
+    //testRadixSort();
     radixGPU();
+    //testRadixSort();
 
-        //Hashing the particles
-        /*partHashKernel->setArg(0, *partHistBuff);
-        partHashKernel->setArg(1, *partBuff);
-        partHashKernel->setArg(2, *voxelInfoBuff);
-        fluidCL->runKernel(partHashKernel, NullRange, local, local);
+    // Hashing the particles
+    runHashKernel();
+    //testHashKernel();
 
-        //Finding the neighbours
-        nbrKernel->setArg(0, *ptNbrBuff);
-        nbrKernel->setArg(1, *partBuff);
-        nbrKernel->setArg(2, *partHistBuff);
-        nbrKernel->setArg(3, *voxelInfoBuff);
-        fluidCL->runKernel(nbrKernel, NullRange, global, local);
+    // Finding the neighbours
+    runNeighborKernel();
+    //testNeigborKernel();
 
-        //To find the rest density for the first time
-        *if(i == 0){
-            densityKernel->setArg(0, *ptNbrBuff);
-            densityKernel->setArg(1, *partBuff);
-            fluidCL->runKernel(densityKernel, NullRange, global, local);
-        }
+    //To find the rest density for the first time
+    if(0){
+        runDensityEstimationKernel();
+        //testDensityEstimationKernel();
+    }
 
-   //Running the updating sep
+    //Running the updating sep
     for(int i = 0 ; i < 1; i++){
-        lambdaKernel->setArg(0, *ptNbrBuff);
-        lambdaKernel->setArg(1, *partBuff);
-        fluidCL->runKernel(lambdaKernel, NullRange, global, local);
-
-        displacementKernel->setArg(0, *ptNbrBuff);
-        displacementKernel->setArg(1, *partBuff);
-        displacementKernel->setArg(2, *particlePosBuff);
-        displacementKernel->setArg(3, *voxelInfoBuff);
-        displacementKernel->setArg(4, *timeBuff);
-        fluidCL->runKernel(displacementKernel, NullRange, global, local);
-
-        collisionKernel->setArg(0, *partBuff);
-        collisionKernel->setArg(1, *voxelInfo);
-        fluidCL->runKernel(collisionKernel, NullRange, global, local);
-
-    }
-        velocityKernel->setArg(0, *partBuff);
-        velocityKernel->setArg(1, *particlePosBuff);
-        fluidCL->runKernel(velocityKernel, NullRange, global, local);
-
-        *posCopyKernel->setArg(0, *partBuff);
-        posCopyKernel->setArg(1, *vertexBuffOpenGL);
-        fluidCL->runKernel(posCopyKernel, NullRange, global, local);*
-
-        fluidCL->flushQueue();
+        // Estimating lambda using closed form expression
+        runLambdaEstimationKernel();
+        //testLambdaEstimationKernel();
     
-    //Debugging the neighbour finding kernel
-    ptNbrs = fluidCL->readFromBuffer<struct ParticleNbrs>(ptNbrBuff, _N);
-    for(int i = 0; i < 10; i++){
-        for(int j = 0; j < 8; j++){
-            printf("%d %d | ", ptNbrs[i].nbrParticle[j].voxelId, ptNbrs[i].nbrParticle[j].voxelIndex);
-        }
-        printf("\n");
-    }*/
+        // Compute displacement based on lambdas, update positions
+        runDisplacementKernel();
+        //testDisplacementKernel();
 
-    //Debugging particle hashing
-    /*partHist = fluidCL->readFromBuffer<struct ParticleHistogram>(partHistBuff, 1);
-    printf("======================\n");
-    printf("%d\n", partHist[0].validEntries);
-    for(int i = 0; i < 40; i++){
-    //for(int i = 0; i < partHist[0].validEntries; i++){
-        printf("%d %d %d\n", i, partHist[0].voxels[i].voxelId, partHist[0].voxels[i].voxelIndex);
+        // Check for collisions wrt objects (walls for now)
+        runCollisionKernel();
+        //testCollisionKernel();
     }
-    printf("======================\n");*/
 
-    //Debugging
-    //VoxelHistogram* readHist = fluidCL->readFromBuffer<VoxelHistogram>(voxelHistBuff, noHashThreads);
+    // Re-computing the velocity based on the displacement
+    runVelocityKernel();
+    //testVelocityKernel();
     
-    /*particles = fluidCL->readFromBuffer<struct Particle>(partBuff, _N);
-    for(int i = 0; i < 10; i++){
-        printf("%d \n", particles[i].voxelId);
-    }*/
-    //Debugging
-    /*std::cout << "==============\n";
-    for(int i = 0; i < noHashThreads; i++){
-        std::cout << readHist[i].validEntries << std::endl;
-    }
-    std::cout << "==============\n";
-    for(int i = 0; i < 32; i++){
-        for(int j = 0; j < noHashThreads; j++){
-            std::cout << readHist[j].voxels[i].voxelId << " "<< readHist[j].voxels[i].voxelIndex<< "  ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << "==============\n";*/
+    // Copying it back 
+    //runPositionCopyKernel();
 
-    /*int* index = fluidCL->readFromBuffer<int>(voxelIndexBuff, noVoxelX * noVoxelY * noVoxelZ);
-    //for(int i = 0; i < 5500; i++){
-    for(int i = 15200; i < 15250; i++){
-        if(index[i] != -1){
-            std::cout << index[i] << " " << i << std::endl;
-        }
-    }
-    std::cout << "==============\n";*/
+    // Flushing the queue so that OpenGL can take over
+    //fluidCL->flushQueue();
 
-    /*printf("============================\n");
-    printf("Rest density %f\n", findRestDensity());
-    printf("============================\n");*/
-
-
-    //Debugging the lambda calculations
-    //particles = fluidCL->readFromBuffer<struct Particle>(partBuff, 1);
-    //printf("%f %f (%f %f %f) (%f %f %f)\n", particles[0].lambda, particles[0].density, particles[0].pos.x, particles[0].pos.y, particles[0].pos.z,
-                                            //particles[0].vel.x, particles[0].vel.y, particles[0].vel.z);
-    /*for(int i = 0; i < 100; i++){
-        printf("%f %f\n", particles[i].lambda, particles[i].density);
-    }*/
+    printf("Iteration completed...\n");
 }
 
 void Fluid::radixCPU(){
@@ -406,39 +339,6 @@ void Fluid::radixGPU(){
         sortParticlePosBuff = particlePosBuff;
         particlePosBuff = tempPointer;
     }
-
-    //Reading back
-    /*particles = fluidCL->readFromBuffer<struct Particle>(partBuff, _N);
-    //particles = fluidCL->readFromBuffer<struct Particle>(tempBuff, _N);
-    std::cout << "==================================================\n";
-    for(int i = 0; i < 32; i++){
-        printf("==> %d  (%f %f %f)\n", particles[i].voxelId, particles[i].pos.x, particles[i].pos.y, particles[i].pos.z);
-    }
-    std::cout << "==================================================\n";*/
-    /*printf("Printing the table for digit %d\n", i);
-    std::cout << "=============================================\n";
-    particles = fluidCL->readFromBuffer<struct Particle>(partBuff, _N);
-    for(int i = 0; i < 32; i++){
-        printf("%d \n", particles[i].voxelId);
-    }
-    std::cout << "=============================================\n";
-
-    hists = fluidCL->readFromBuffer<struct Histogram>(histBuff, noThreads);
-    //startPts= fluidCL->readFromBuffer<struct Histogram>(startPtBuff, noThreads);
-    for(int i = 0; i < noThreads; i++){
-        for(int j = 0; j < 10; j++){
-            std::cout << hists[i].bins[j] << " ";
-        }
-        std::cout << std::endl;
-    }
-    //std::cout << "=============================================\n";*/
-    
-    /*for(int i = 0; i < noThreads; i++){
-        for(int j = 0; j < 10; j++){
-            std::cout << startPts[i].bins[j] << " ";
-        }
-        std::cout << std::endl;
-    }*/
 }
 
 float Fluid::findRestDensity(){

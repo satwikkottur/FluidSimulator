@@ -76,12 +76,16 @@ int main(int argc, char** argv){
     //Initializing the particles
     //water.runIteration();
 
-    for(int i = 0; i < 1; i++){
+    for(int i = 0; i < 10; i++){
+        myTime.addTimePoint("Iteration started");
         water->debug(vertexBuffCL);
         printf("Iteration main : %d\n", i);
-        //myTime.addTimePoint("Iteration done");
+        myTime.addTimePoint("Iteration done");
     }
+
+    water->fluidCL->flushQueue();
     
+    myTime.printTimePoints();
     //Initializing a vertex array and binding it to use it
     //glGenBuffers(1, &vertexBuffId);
     //glBindBuffer(GL_ARRAY_BUFFER, vertexBuffId);
