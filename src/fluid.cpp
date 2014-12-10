@@ -43,10 +43,18 @@ void Fluid::initParticles(std::string initState){
 void Fluid::setupKernels(){
     //Initializing the setup for simulations
         
-    std::string strings[] = {"external_force" , "radix_histogram", "radix_partition",
-                            "radix_copy", "radix_resetParams", "hash_particle",
-                            "density_estimation", "lambda_estimation", "find_neighbour",
-                            "displacement_estimation", "collision_detection", "copy_position", 
+    std::string strings[] = {"external_force",      // Evaluate the influence of external force
+                            "radix_histogram",      // Generating the histogram for current place for RADIX
+                            "radix_partition",      // Creating partition for current place for RADIX
+                            "radix_copy",           // Copying the data to sort the particles according to voxelId for RADIX
+                            "radix_resetParams",    // Re-setting the parameters to carry out next stage of RADIX
+                            "hash_particle",        // Hashing the particles ie getting the voxel ids from their position
+                            "density_estimation", 
+                            "lambda_estimation", 
+                            "find_neighbour",
+                            "displacement_estimation",
+                            "collision_detection",
+                            "copy_position", 
                             "velocity_update"};
     //Creating kernels
     std::string kernelFile, kernelName;
@@ -99,7 +107,7 @@ void Fluid::setupSystem(){
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///Setting up the kernel for execution
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    updateKernel = fluidCL->kernels.at("external_force");
+    externalForceKernel = fluidCL->kernels.at("external_force");
     
     acceleration = new Tuple[1];
     acceleration[0].x = gX;
@@ -184,13 +192,13 @@ void Fluid::runIteration(){
     digitBuff = fluidCL->writeToBuffer<int>(&digitPower, CL_MEM_READ_WRITE, 1);
 
     //First step of updating based on external factors
-    Kernel* updateKernel = fluidCL->kernels.at("external_force");
-    updateKernel->setArg(0, partBuff);
-    updateKernel->setArg(1, extAccBuff);
-    updateKernel->setArg(2, timeStepBuff);
+    Kernel* externalForceKernel = fluidCL->kernels.at("external_force");
+    externalForceKernel->setArg(0, partBuff);
+    externalForceKernel->setArg(1, extAccBuff);
+    externalForceKernel->setArg(2, timeStepBuff);
 
     for(int i = 0; i < 1; i++){
-        fluidCL->runKernel(updateKernel, NullRange, global, local);
+        fluidCL->runKernel(externalForceKernel, NullRange, global, local);
     }
 
     fluidCL->flushQueue();
@@ -206,32 +214,24 @@ void Fluid::runIteration(){
 }
 
 void Fluid::debug(BufferGL* vertexBuffOpenGL){
-    //Work groups initialization
+    // Work groups initialization
     NDRange global(_N);
     NDRange local(1);
     NDRange hash(noHashThreads);
 
-    //particles = fluidCL->readFromBuffer<struct Particle>(partBuff, 1);
-    //printParticleInfo(0);
-    particlePos = fluidCL->readFromBuffer<float>(particlePosBuff, 3 * _N);
-    //printf("%f %f %f\n", particlePos[0], particlePos[1], particlePos[2]);
-    //printf("%f %f %f\n", (particles[0].pos.x-particlePos[0])/evolveTime, (particles[0].pos.y-particlePos[1])/evolveTime, (particles[0].pos.z-particlePos[2])/evolveTime);
-    printf("===========================================\n");
-        posCopyKernel->setArg(0, *partBuff);
-        posCopyKernel->setArg(1, *particlePosBuff);
-        fluidCL->runKernel(posCopyKernel, NullRange, global, local);
+    // Copying the position of the particles from float[3*N] to OpenCL buffer
+    runPositionCopyKernel();
+    //testPositionCopyKernel();
 
-        updateKernel->setArg(0, *partBuff);
-        updateKernel->setArg(1, *accBuff);
-        updateKernel->setArg(2, *timeBuff);
-        updateKernel->setArg(3, *voxelInfoBuff);
-        fluidCL->runKernel(updateKernel, NullRange, global, local);
+    // External force calculations and updating velocity and position guess
+    runExternalForceKernel();
+    //testExternalForceKernel();
 
-        //Sorting the voxels
-        radixGPU();
+    //Sorting the particles according to the voxel id, for easier match
+    radixGPU();
 
         //Hashing the particles
-        partHashKernel->setArg(0, *partHistBuff);
+        /*partHashKernel->setArg(0, *partHistBuff);
         partHashKernel->setArg(1, *partBuff);
         partHashKernel->setArg(2, *voxelInfoBuff);
         fluidCL->runKernel(partHashKernel, NullRange, local, local);
@@ -244,11 +244,11 @@ void Fluid::debug(BufferGL* vertexBuffOpenGL){
         fluidCL->runKernel(nbrKernel, NullRange, global, local);
 
         //To find the rest density for the first time
-        /*if(i == 0){
+        *if(i == 0){
             densityKernel->setArg(0, *ptNbrBuff);
             densityKernel->setArg(1, *partBuff);
             fluidCL->runKernel(densityKernel, NullRange, global, local);
-        }*/
+        }
 
    //Running the updating sep
     for(int i = 0 ; i < 1; i++){
@@ -263,23 +263,23 @@ void Fluid::debug(BufferGL* vertexBuffOpenGL){
         displacementKernel->setArg(4, *timeBuff);
         fluidCL->runKernel(displacementKernel, NullRange, global, local);
 
-        /*collisionKernel->setArg(0, *partBuff);
+        collisionKernel->setArg(0, *partBuff);
         collisionKernel->setArg(1, *voxelInfo);
-        fluidCL->runKernel(collisionKernel, NullRange, global, local);*/
+        fluidCL->runKernel(collisionKernel, NullRange, global, local);
 
     }
         velocityKernel->setArg(0, *partBuff);
         velocityKernel->setArg(1, *particlePosBuff);
         fluidCL->runKernel(velocityKernel, NullRange, global, local);
 
-        /*posCopyKernel->setArg(0, *partBuff);
+        *posCopyKernel->setArg(0, *partBuff);
         posCopyKernel->setArg(1, *vertexBuffOpenGL);
-        fluidCL->runKernel(posCopyKernel, NullRange, global, local);*/
+        fluidCL->runKernel(posCopyKernel, NullRange, global, local);*
 
         fluidCL->flushQueue();
     
     //Debugging the neighbour finding kernel
-    /*ptNbrs = fluidCL->readFromBuffer<struct ParticleNbrs>(ptNbrBuff, _N);
+    ptNbrs = fluidCL->readFromBuffer<struct ParticleNbrs>(ptNbrBuff, _N);
     for(int i = 0; i < 10; i++){
         for(int j = 0; j < 8; j++){
             printf("%d %d | ", ptNbrs[i].nbrParticle[j].voxelId, ptNbrs[i].nbrParticle[j].voxelIndex);
@@ -458,13 +458,13 @@ float Fluid::findRestDensity(){
 }
 
 void Fluid::printParticleInfo(int index){
-    printf("%f %f %d (%f %f %f) (%f %f %f)\n", particles[index].density, particles[index].lambda, particles[index].voxelId,
+    printf("Den : %f lambda: %f voxelId: %d \nPos: (%f %f %f) vel :(%f %f %f)\n", particles[index].density, particles[index].lambda, particles[index].voxelId,
                                             particles[index].pos.x, particles[index].pos.y, particles[index].pos.z,
                                             particles[index].vel.x, particles[index].vel.y, particles[index].vel.z);
 }
 
     /*kernelFile = "kernels/external_force_kernel.cl";
-    kernelName = "external_force";
+    ernelName = "external_force";
     fluidCL->createKernel(kernelFile, kernelName);
 
     kernelFile = "kernels/radix_histogram_kernel.cl";

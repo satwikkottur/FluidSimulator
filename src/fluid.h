@@ -51,7 +51,7 @@ class Fluid{
         Buffer* tempBuff;
         //////////////////////////////////////////////////////////////////
         //Updating step
-        Kernel* updateKernel;
+        Kernel* externalForceKernel;
         struct Tuple* acceleration;
         struct VoxelHistogram* voxelHist;
         struct ParticleHistogram* partHist;
@@ -117,6 +117,15 @@ class Fluid{
         float findRestDensity();
         //Printing the particle information for debugging
         void printParticleInfo(int);
+
+        // Running kernel methods
+        void runPositionCopyKernel();
+        void runExternalForceKernel();
+
+        // Testing kernel methods
+        void testPositionCopyKernel();
+        void testExternalForceKernel();
+
     private:
         //Attributes
         //Buffer for the particles

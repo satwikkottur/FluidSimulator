@@ -1,0 +1,13 @@
+*******************************************************************
+                    README
+    Instructions for Fluid Simulation Project
+*******************************************************************
+
+Kernels:
+-------
+
+1. PositionCopyKernel - posCopyKernel:
+    
+    Copying the contents of position from particle struct buffer to 3D point array, for OpenGL 
+
+2. 

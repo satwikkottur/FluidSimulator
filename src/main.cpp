@@ -48,37 +48,39 @@ int main(int argc, char** argv){
     water->setupSystem();
 
     //water->runIteration();
-      ///////////////////////////////////////////
-     // Initializing and checking OpenGL part //
-    ///////////////////////////////////////////
-    myGL = new OpenGL();
-    
-    // Loading the shader paths
-    char vertexShaderPath[] = "shaders/SphereVertexShader.v";
-    char fragmentShaderPath[] = "shaders/SphereFragmentShader.f";
-    myGL->initializeOpenGL(vertexShaderPath, fragmentShaderPath);
-    
-    // Looping around in a while
-    do{
-        // Rendering the scene
-        myGL->renderScene();
-    }
-    while(glfwWindowShouldClose(myGL->window) == 0 &&
-        glfwGetKey(myGL->window, GLFW_KEY_ESCAPE) != GLFW_PRESS);
+    if(0){
+          ///////////////////////////////////////////
+         // Initializing and checking OpenGL part //
+        ///////////////////////////////////////////
+        myGL = new OpenGL();
+        
+        // Loading the shader paths
+        char vertexShaderPath[] = "shaders/SphereVertexShader.v";
+        char fragmentShaderPath[] = "shaders/SphereFragmentShader.f";
+        myGL->initializeOpenGL(vertexShaderPath, fragmentShaderPath);
+        
+        // Looping around in a while
+        do{
+            // Rendering the scene
+            myGL->renderScene();
+        }
+        while(glfwWindowShouldClose(myGL->window) == 0 &&
+            glfwGetKey(myGL->window, GLFW_KEY_ESCAPE) != GLFW_PRESS);
 
-    // Cleaning up objects, VBOs, vertex arrays
-    myGL->terminateOpenGL();
+        // Cleaning up objects, VBOs, vertex arrays
+        myGL->terminateOpenGL();
+    }
 
     //myCL->initOpenCLwithOpenGL();
     
     //Initializing the particles
     //water.runIteration();
 
-    /*for(int i = 0; i < 1; i++){
+    for(int i = 0; i < 1; i++){
         water->debug(vertexBuffCL);
         printf("Iteration main : %d\n", i);
         //myTime.addTimePoint("Iteration done");
-    }*/
+    }
     
     //Initializing a vertex array and binding it to use it
     //glGenBuffers(1, &vertexBuffId);
