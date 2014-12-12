@@ -76,7 +76,7 @@ int main(int argc, char** argv){
     //Initializing the particles
     //water.runIteration();
 
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < 1; i++){
         myTime.addTimePoint("Iteration started");
         water->debug(vertexBuffCL);
         printf("Iteration main : %d\n", i);

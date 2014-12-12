@@ -17,6 +17,7 @@
 #include "clutils.h"
 #include "structs/structures.h"
 #include "parameters.h"
+#include "timeMeasure.h"
 
 class Fluid{
     public:

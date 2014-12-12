@@ -214,6 +214,10 @@ void Fluid::runIteration(){
 }
 
 void Fluid::debug(BufferGL* vertexBuffOpenGL){
+    // Time profiling the functions
+    TimeMeasure profile;
+    profile.addTimePoint("Start");
+
     // Work groups initialization
     NDRange global(_N);
     NDRange local(1);
@@ -223,21 +227,26 @@ void Fluid::debug(BufferGL* vertexBuffOpenGL){
     //runPositionCopyKernel();
     //testPositionCopyKernel();
 
+    for (int j = 0 ; j < 10; j++){
     // External force calculations and updating velocity and position guess
     runExternalForceKernel();
+    profile.addTimePoint("Finished external force");
     //testExternalForceKernel();
 
     //Sorting the particles according to the voxel id, for easier match
     //testRadixSort();
     radixGPU();
+    profile.addTimePoint("Finished sort");
     //testRadixSort();
 
     // Hashing the particles
     runHashKernel();
+    profile.addTimePoint("Finished hashing");
     //testHashKernel();
 
     // Finding the neighbours
     runNeighborKernel();
+    profile.addTimePoint("Finished finding nbrs");
     //testNeigborKernel();
 
     //To find the rest density for the first time
@@ -249,27 +258,33 @@ void Fluid::debug(BufferGL* vertexBuffOpenGL){
     //Running the updating sep
     for(int i = 0 ; i < 1; i++){
         // Estimating lambda using closed form expression
-        runLambdaEstimationKernel();
+        //runLambdaEstimationKernel();
+        //profile.addTimePoint("Finished finding lambda");
         //testLambdaEstimationKernel();
     
         // Compute displacement based on lambdas, update positions
-        runDisplacementKernel();
+        //runDisplacementKernel();
+        //profile.addTimePoint("Finished finding displacement");
         //testDisplacementKernel();
 
         // Check for collisions wrt objects (walls for now)
-        runCollisionKernel();
+        //runCollisionKernel();
+        //profile.addTimePoint("Finished collisions");
         //testCollisionKernel();
     }
 
     // Re-computing the velocity based on the displacement
-    runVelocityKernel();
+    //runVelocityKernel();
+    profile.addTimePoint("Finished velocity");
     //testVelocityKernel();
-    
+   } 
     // Copying it back 
     //runPositionCopyKernel();
 
     // Flushing the queue so that OpenGL can take over
-    //fluidCL->flushQueue();
+    fluidCL->flushQueue();
+    profile.addTimePoint("Flushing done");
+    profile.printTimePoints();
 
     printf("Iteration completed...\n");
 }
